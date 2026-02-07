@@ -17,6 +17,7 @@ CATEGORIES = [
     'Misc',
     'OSINT',
     'Pwn',
+    'SQL Injection',
     'Steganography',
     'General Skills'
 ]
@@ -62,6 +63,16 @@ def parse_readme(readme_path):
     # Hints section from README
     hints_match = re.search(r'##\s*Hints?\s*\n(.*?)(?=\n##\s*(?:Solution|Flag)|$)', content, re.DOTALL)
     
+    # Parse hints into list
+    hints = []
+    if hints_match:
+        hints_text = hints_match.group(1).strip()
+        # Parse each line that starts with - or * as a hint
+        for line in hints_text.split('\n'):
+            hint_line = re.match(r'^\s*[-*]\s*(.+)', line)
+            if hint_line:
+                hints.append(hint_line.group(1).strip())
+    
     # Flag from Flag section
     flag_section_match = re.search(r'##\s*Flag\s*\n`([^`]+)`', content)
     if flag_section_match:
@@ -72,8 +83,6 @@ def parse_readme(readme_path):
         flag = flag_match.group(0) if flag_match else ''
     
     description = desc_match.group(1).strip() if desc_match else ''
-    if hints_match:
-        description += f"\n\nHints:\n{hints_match.group(1).strip()}"
     
     return {
         'name': name,
@@ -84,7 +93,8 @@ def parse_readme(readme_path):
         'type': challenge_type,
         'state': state,
         'flag_type': flag_type,
-        'tags': [difficulty.group(1) if difficulty else 'Medium']
+        'tags': [difficulty.group(1) if difficulty else 'Medium'],
+        'hints': hints
     }
 
 def generate_challenge_yml(challenge_dir):
@@ -115,7 +125,8 @@ def generate_challenge_yml(challenge_dir):
         'state': data['state'],          # 'visible' or 'hidden' (from README or default)
         'flags': [data['flag']],         # Simple array of flag strings
         'tags': data['tags'],            # Array of tags (we use difficulty)
-        'files': files                   # The files to upload
+        'files': files,                  # The files to upload
+        'hints': data['hints']           # Array of hint strings
     }
     # ==================================================
     
